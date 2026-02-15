@@ -6,6 +6,9 @@ pipeline {
         maven 'maven 3.9.12'
     }
 
+    environment {
+        Docker_IMAGE = 'shubh9828/mvnapp:latest'
+
     stages {
         stage('Build') {
             steps {
@@ -22,3 +25,24 @@ pipeline {
         }
     }
 }
+
+stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKER_IMAGE:latest .'
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'USER',
+                    passwordVariable: 'PASS')]) {
+
+                    sh '''
+                    echo $PASS | docker login -u $USER --password-stdin
+                    docker push $DOCKER_IMAGE:latest
+                    '''
+                }
+            }
+        }
